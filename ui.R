@@ -15,8 +15,10 @@ fluidPage(
 				  choices = c(as.character(universitySorted))),
       
 	  selectInput("gender", "Select which gender:", 
-                  choices = c("Male", "Female")),
-				  
+                  choices = c("Male", "Female", "Comparison", "Total")),
+		
+	  selectInput("option", "Select which type:", 
+                  choices = c("Raw Numbers", "Percentage")),
 				  
 	  p(a("Source: The Times Higher Education World University Ranking", href = "https://www.timeshighereducation.com/world-university-rankings", target = "_blank"))
     ),
