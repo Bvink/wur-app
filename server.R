@@ -106,7 +106,7 @@ function(input, output) {
   # Show the number of students per country/university.
   output$view <- renderPlot({
     options(scipen=5)
-	par(mar=c(15,5,2,2), mgp=c(4,1,0))
+	par(mar=c(15,6,2,2), mgp=c(5,1,0))
 	datasetInput()
   }, width = "auto", height = 750)
   
