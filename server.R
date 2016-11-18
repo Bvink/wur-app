@@ -7,38 +7,43 @@ function(input, output) {
   
   # Return the requested data
   datasetInput <- reactive({	
+  Country <- input$country
+  if (Country != "All") {
+    uniData <- universityDataRelevant[which(universityDataRelevant$country == "Germany"), ]
+	uniData <- uniData[order(uniData$university_name),]
+	relevantData <- uniData$num_students
+    horizontal <- uniData$university_name
+	maleStats <- getMalePercentages(uniData)
+    femaleStats <- getFemalePercentages(uniData)
+  } else {
+    uniData <- universityDataRelevant
+	aggRawNumbers <- aggregate(uniData$num_students, by=list(Category=uniData$country), FUN=sum)
+	horizontal = aggRawNumbers[,1]
+	relevantData = aggRawNumbers[,2]
+	maleStats = getMaleAverage(uniData)
+	femaleStats = getFemaleAverage(uniData)
+  }
   
-  uniData <- universityDataRelevant[which(universityDataRelevant$country == input$country), ]
-  uniData$num_students <- as.numeric(gsub(",","",uniData$num_students))
-  
-  uniData <- uniData[order(uniData$university_name),]
-  
-  students <- uniData$num_students
-  university <- uniData$university_name
-  university <- droplevels(university)
-  
-  maleStats = as.numeric(substr(uniData$female_male_ratio[],1,2))
-  femaleStats = as.numeric(substr(uniData$female_male_ratio[],6,7))
-  
+  horizontal <- droplevels(horizontal)
   beside <- FALSE
   
   if(input$option == "Raw Numbers") {
 	  if(input$gender == "Male") {
-		plotData <- students*(maleStats/100)
+		plotData <- relevantData*(maleStats/100)
 		colours <- c("lightblue")
 		yLimit <- FALSE
 	  } else if (input$gender == "Female") { 
-		plotData <- students*(femaleStats/100)
+		plotData <- relevantData*(femaleStats/100)
 		colours <- c("pink")
 		yLimit <- FALSE
 	  } else if (input$gender == "Comparison" || input$gender == "Total") { 
-		plotData <- rbind(students*(maleStats/100), students*(femaleStats/100))
+		plotData <- rbind(relevantData*(maleStats/100), relevantData*(femaleStats/100))
 		colours <- c("lightblue", "pink")
 		yLimit <- FALSE
 	  }
 	  yLimit <- c(0, ceiling(max(plotData)))
 	  if(input$gender == "Total") {
-		yLimit <- c(0, ceiling(max(students)))
+		yLimit <- c(0, ceiling(max(relevantData)))
 	  } else {
 		beside <- TRUE
 		yLimit <- c(0, ceiling(max(plotData)))
@@ -59,10 +64,43 @@ function(input, output) {
 	  }
 	  yLimit <- c(0,100)
   }
-  plot <- barplot(plotData, names.arg = university, las=2, cex.names=0.8, ylab="Students", col=colours, beside=beside, ylim=yLimit)
+  
+  plot <- barplot(plotData, names.arg = horizontal, las=2, cex.names=0.8, ylab="Students", col=colours, beside=beside, ylim=yLimit)
   output <- plot 
   
   })
+  
+  getMalePercentages <- function(uniData) {
+  maleStats <- as.numeric(gsub("\\:.*","",uniData$female_male_ratio[]))
+  return(maleStats)
+  }
+  
+  getMaleAverage <- function(uniData) {
+    maleStats <- getMalePercentages(uniData)
+    tempDataStruct <- uniData
+	tempDataStruct$female_male_ratio <- maleStats
+	aggMaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
+	tempDataStruct$female_male_ratio <- 1
+	countMaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
+	averageMaleStats <- aggMaleStats[,2]/countMaleStats[,2]
+	return(averageMaleStats)
+  }
+  
+  getFemalePercentages <- function(uniData) {
+  femaleStats <- as.numeric(gsub("^.*?\\:","",uniData$female_male_ratio[]))
+  return(femaleStats)
+  }
+  
+  getFemaleAverage <- function(uniData) {
+    femaleStats <- getFemalePercentages(uniData)
+    tempDataStruct <- uniData
+	tempDataStruct$female_male_ratio <- femaleStats
+	aggFemaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
+	tempDataStruct$female_male_ratio <- 1
+	countFemaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
+	averageFemaleStats <- aggFemaleStats[,2]/countFemaleStats[,2]
+	return(averageFemaleStats)
+  }
  
  
   # Show the number of students per country/university.
