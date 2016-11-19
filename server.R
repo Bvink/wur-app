@@ -53,8 +53,7 @@ function(input, output) {
       uniData <- universityDataRelevant[which(universityDataRelevant$country == input$country), ]
       plotData <- obtainUniversityData(uniData)
     } else {
-      countryData <- universityDataRelevant
-	  plotData <- obtainCountryData(countryData)
+	  plotData <- obtainCountryData(universityDataRelevant)
     }
 	return(plotData)
   }
@@ -64,8 +63,8 @@ function(input, output) {
   obtainUniversityData <- function(uniData) {
 	names <- uniData$university_name
 	relevantData <- uniData$num_students
-	maleStats <- getMalePercentages(uniData)
-    femaleStats <- getFemalePercentages(uniData)
+	maleStats <- getMaleUniversityPercentages(uniData)
+    femaleStats <- getFemaleUniversityPercentages(uniData)
 	plotData <- formatData(names, relevantData, maleStats, femaleStats)
 	return(plotData)
   }
@@ -76,27 +75,21 @@ function(input, output) {
     aggRawNumbers <- aggregate(countryData$num_students, by=list(Category=countryData$country), FUN=sum)
 	names = aggRawNumbers[,1]
 	relevantData = aggRawNumbers[,2]
-	maleStats = getMaleTotal(countryData)
-	femaleStats = getFemaleTotal(countryData)
+	maleStats = getMaleCountryPercentages(countryData)
+	femaleStats = getFemaleCountryPercentages(countryData)
 	plotData <- formatData(names, relevantData, maleStats, femaleStats)
 	return(plotData)
   }
-  #Get the correct percentage of males from the dataset
-  getMalePercentages <- function(uniData) {
-    maleStats <- as.numeric(gsub("\\:.*","",uniData$female_male_ratio[]))
+  #Get the percentage of males for each individual university
+  getMaleUniversityPercentages <- function(data) {
+    maleStats <- as.numeric(gsub("\\:.*","",data$female_male_ratio[]))
   return(maleStats)
   }
   
-  #TODO: THIS IS ENTIRELY WRONG.
-  getMaleTotal <- function(uniData) {
-    maleStats <- getMalePercentages(uniData)
-    tempDataStruct <- uniData
-	tempDataStruct$female_male_ratio <- maleStats
-	aggMaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
-	tempDataStruct$female_male_ratio <- 1
-	countMaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
-	averageMaleStats <- aggMaleStats[,2]/countMaleStats[,2]
-	return(averageMaleStats)
+  #Get the total percentage of male students per country
+  getMaleCountryPercentages <- function(countryData) {
+	countryData$female_male_ratio <- getMaleUniversityPercentages(countryData)
+	return(calculateCountryGenderPercentages(countryData))
   }
   
   # Calculate the amount of males per university
@@ -106,27 +99,31 @@ function(input, output) {
   
   
   #Get the correct percentage of females from the dataset
-  getFemalePercentages <- function(uniData) {
-    femaleStats <- as.numeric(gsub("^.*?\\:","",uniData$female_male_ratio[]))
+  getFemaleUniversityPercentages <- function(data) {
+    femaleStats <- as.numeric(gsub("^.*?\\:","",data$female_male_ratio[]))
   return(femaleStats)
   }
   
-  #TODO: THIS IS ENTIRELY WRONG.
-  getFemaleTotal <- function(uniData) {
-    femaleStats <- getFemalePercentages(uniData)
-    tempDataStruct <- uniData
-	tempDataStruct$female_male_ratio <- femaleStats
-	aggFemaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
-	tempDataStruct$female_male_ratio <- 1
-	countFemaleStats <- aggregate(tempDataStruct$female_male_ratio, by=list(Category=uniData$country), FUN=sum)
-	averageFemaleStats <- aggFemaleStats[,2]/countFemaleStats[,2]
-	return(averageFemaleStats)
+  #Get the total percentage of female students per country
+  getFemaleCountryPercentages <- function(countryData) {
+    countryData$female_male_ratio <- getFemaleUniversityPercentages(countryData)
+	return(calculateCountryGenderPercentages(countryData))
+  }
+  
+  #Calculate the percentage of a gender of students per country
+  calculateCountryGenderPercentages <- function(countryData) {
+    aggStudentTotals<- aggregate(countryData$num_students, by=list(Category=countryData$country), FUN=sum)
+	aggGenderTotals <- aggregate(countryData$num_students*(countryData$female_male_ratio), by=list(Category=countryData$country), FUN=sum)
+	averageStudentPercentages <- aggGenderTotals$x/aggStudentTotals$x
+	return(averageStudentPercentages)
   }
   
   # Calculate the amount of females per university
   calculateFemaleRawNumbers <- function(plotData) {
     return(plotData$relevantData*(plotData$femaleStats/100))
   }
+  
+  
   
   # Format all of the obtained stats back into a single dataframe.
   formatData <- function(names, relevantData, maleStats, femaleStats) {
