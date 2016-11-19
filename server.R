@@ -41,11 +41,13 @@ function(input, output) {
 	  yLimit <- c(0,100)
   }
   
+  #Plot a barplot with the given data
   plot <- barplot(results, names.arg = plotData$names, las=2, cex.names=0.8, ylab="Students", col=colours, beside=(input$gender == "Comparison"), ylim=yLimit)
   output <- plot 
   
   })
   
+  #Obtain the dataframe with all information relevant to the plot
   obtainPlotData <- function(country) {
     if (country != "All") {
       uniData <- universityDataRelevant[which(universityDataRelevant$country == input$country), ]
@@ -57,6 +59,8 @@ function(input, output) {
 	return(plotData)
   }
   
+  #Obtain the plot data relevant to all universities of a single country
+  #This returns a single dataframe with all the relevant information
   obtainUniversityData <- function(uniData) {
 	names <- uniData$university_name
 	relevantData <- uniData$num_students
@@ -66,22 +70,25 @@ function(input, output) {
 	return(plotData)
   }
   
+  #Obtain the plot data relevant to "all" countries
+  #This returns a single dataframe with all the relevant information
   obtainCountryData <- function(countryData) {
     aggRawNumbers <- aggregate(countryData$num_students, by=list(Category=countryData$country), FUN=sum)
 	names = aggRawNumbers[,1]
 	relevantData = aggRawNumbers[,2]
-	maleStats = getMaleAverage(countryData)
-	femaleStats = getFemaleAverage(countryData)
+	maleStats = getMaleTotal(countryData)
+	femaleStats = getFemaleTotal(countryData)
 	plotData <- formatData(names, relevantData, maleStats, femaleStats)
 	return(plotData)
   }
-  
+  #Get the correct percentage of males from the dataset
   getMalePercentages <- function(uniData) {
     maleStats <- as.numeric(gsub("\\:.*","",uniData$female_male_ratio[]))
   return(maleStats)
   }
   
-  getMaleAverage <- function(uniData) {
+  #TODO: THIS IS ENTIRELY WRONG.
+  getMaleTotal <- function(uniData) {
     maleStats <- getMalePercentages(uniData)
     tempDataStruct <- uniData
 	tempDataStruct$female_male_ratio <- maleStats
@@ -92,16 +99,20 @@ function(input, output) {
 	return(averageMaleStats)
   }
   
+  # Calculate the amount of males per university
   calculateMaleRawNumbers <- function(plotData) {
     return(plotData$relevantData*(plotData$maleStats/100))
   }
   
+  
+  #Get the correct percentage of females from the dataset
   getFemalePercentages <- function(uniData) {
     femaleStats <- as.numeric(gsub("^.*?\\:","",uniData$female_male_ratio[]))
   return(femaleStats)
   }
   
-  getFemaleAverage <- function(uniData) {
+  #TODO: THIS IS ENTIRELY WRONG.
+  getFemaleTotal <- function(uniData) {
     femaleStats <- getFemalePercentages(uniData)
     tempDataStruct <- uniData
 	tempDataStruct$female_male_ratio <- femaleStats
@@ -112,16 +123,19 @@ function(input, output) {
 	return(averageFemaleStats)
   }
   
+  # Calculate the amount of females per university
   calculateFemaleRawNumbers <- function(plotData) {
     return(plotData$relevantData*(plotData$femaleStats/100))
   }
   
+  # Format all of the obtained stats back into a single dataframe.
   formatData <- function(names, relevantData, maleStats, femaleStats) {
     names <- droplevels(names)
     plotData <- data.frame(names, relevantData, maleStats, femaleStats)
 	return(plotData)
   }
   
+  #Sort the data dependant on the options given.
   sortData <- function(plotData, mode, option, gender) {
     if(mode == "Alphabetical") {
 	  plotData <- plotData[order(plotData$names),]
@@ -148,7 +162,7 @@ function(input, output) {
   }
  
  
-  # Show the number of students per country/university.
+  # Render the plot
   output$view <- renderPlot({
     options(scipen=5)
 	par(mar=c(18,6,2,2), mgp=c(5,1,0))
