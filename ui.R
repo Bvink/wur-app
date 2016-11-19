@@ -20,7 +20,7 @@ fluidPage(
 		  selectInput("option", "Select which type:", 
 					  choices = c("Raw Numbers", "Percentage")),
 					  
-		  selectInput("mode", "Select which mode:", 
+		  selectInput("mode", "Select which sorting mode:", 
 					  choices = c("Alphabetical", "Numeral")),
 					  
 					  
