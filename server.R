@@ -135,9 +135,14 @@ function(input, output) {
 		  plotData <- plotData[order(plotData$relevantData),]
 		}
 	  } else if(option == "Percentage") {
-	  
+	  if(gender == "Male") {
+		  plotData <- plotData[order(plotData$maleStats),]
+		} else if(gender == "Female") {
+		  plotData <- plotData[order(plotData$femaleStats),]
+		} else if(gender == "Comparison" || gender == "Total") {
+		  plotData <- plotData[order(plotData$maleStats),]
+		}
 	  }
-	  
 	}
 	return(plotData)
   }
@@ -146,7 +151,7 @@ function(input, output) {
   # Show the number of students per country/university.
   output$view <- renderPlot({
     options(scipen=5)
-	par(mar=c(15,6,2,2), mgp=c(5,1,0))
+	par(mar=c(18,6,2,2), mgp=c(5,1,0))
 	datasetInput()
   }, width = "auto", height = 750)
   
