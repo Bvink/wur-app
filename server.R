@@ -9,17 +9,17 @@ function(input, output) {
   datasetInput <- reactive({	
   
   plotData <- obtainPlotData(input$country)
-  plotData <- plotData[order(plotData$names),]
+  plotData <- sortData(plotData, input$mode, input$option, input$gender)
   
   if(input$option == "Raw Numbers") {
 	  if(input$gender == "Male") {
-		results <- plotData$relevantData*(plotData$maleStats/100)
+		results <- calculateMaleRawNumbers(plotData)
 		colours <- c("lightblue")
 	  } else if (input$gender == "Female") { 
-		results <- plotData$relevantData*(plotData$femaleStats/100)
+		results <- calculateFemaleRawNumbers(plotData)
 		colours <- c("pink")
 	  } else if (input$gender == "Comparison" || input$gender == "Total") { 
-		results <- rbind(plotData$relevantData*(plotData$maleStats/100), plotData$relevantData*(plotData$femaleStats/100))
+		results <- rbind(calculateMaleRawNumbers(plotData), calculateFemaleRawNumbers(plotData))
 		colours <- c("lightblue", "pink")
 	  }
 	  if (input$gender == "Total") {
@@ -92,6 +92,10 @@ function(input, output) {
 	return(averageMaleStats)
   }
   
+  calculateMaleRawNumbers <- function(plotData) {
+    return(plotData$relevantData*(plotData$maleStats/100))
+  }
+  
   getFemalePercentages <- function(uniData) {
     femaleStats <- as.numeric(gsub("^.*?\\:","",uniData$female_male_ratio[]))
   return(femaleStats)
@@ -108,9 +112,33 @@ function(input, output) {
 	return(averageFemaleStats)
   }
   
+  calculateFemaleRawNumbers <- function(plotData) {
+    return(plotData$relevantData*(plotData$femaleStats/100))
+  }
+  
   formatData <- function(names, relevantData, maleStats, femaleStats) {
     names <- droplevels(names)
     plotData <- data.frame(names, relevantData, maleStats, femaleStats)
+	return(plotData)
+  }
+  
+  sortData <- function(plotData, mode, option, gender) {
+    if(mode == "Alphabetical") {
+	  plotData <- plotData[order(plotData$names),]
+	} else if (mode == "Numeral") {
+	  if(option == "Raw Numbers") {
+	    if(gender == "Male") {
+		  plotData <- plotData[order(calculateMaleRawNumbers(plotData)),]
+		} else if(gender == "Female") {
+		  plotData <- plotData[order(calculateFemaleRawNumbers(plotData)),]
+		} else if(gender == "Comparison" || gender == "Total") {
+		  plotData <- plotData[order(plotData$relevantData),]
+		}
+	  } else if(option == "Percentage") {
+	  
+	  }
+	  
+	}
 	return(plotData)
   }
  

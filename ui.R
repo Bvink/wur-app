@@ -20,6 +20,9 @@ fluidPage(
 		  selectInput("option", "Select which type:", 
 					  choices = c("Raw Numbers", "Percentage")),
 					  
+		  selectInput("mode", "Select which mode:", 
+					  choices = c("Alphabetical", "Numeral")),
+					  
 		  p(a("Source: The Times Higher Education World University Ranking", href = "https://www.timeshighereducation.com/world-university-rankings", target = "_blank"))
 		),
 		
