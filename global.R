@@ -6,5 +6,3 @@ universityDataRelevant <- universityDataRelevant[-which(universityDataRelevant$f
 universityDataRelevant$num_students <- as.numeric(gsub(",","",universityDataRelevant$num_students))
 
 countrySorted <- sort(unique(universityDataRelevant[,2]))
-
-yeardataSorted <- sort(unique(universityData[,14]))
